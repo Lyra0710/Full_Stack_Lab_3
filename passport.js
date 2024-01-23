@@ -35,22 +35,26 @@ passport.use(new GoogleStrategy({
   callbackURL:"http://localhost:3000/auth/callback", 
   passReqToCallback:true
 }, 
-(request, accessToken, refreshToken, profile, done) => {
+async (request, accessToken, refreshToken, profile, done) => {
   // Checking if the user already exists in your MongoDB and creating a new user when the user is a new one.
-  User.findOne({ googleId: profile.id }, async (err, user) => {
-      if (err) {
-          return done(err);
-      }
-      if (!user) {
-          user = await User.create({
-              googleId: profile.id,
-              email: profile.emails[0].value,
-              displayName: profile.displayName
-          });
-      }
-      return done(null, user);
-  });
-}));
+  try {
+    let user = await User.findOne({ googleId: profile.id });
+
+    if (!user) {
+        user = await User.create({
+            googleId: profile.id,
+            email: profile.emails[0].value,
+            displayName: profile.displayName
+        });
+    }
+
+    return done(null, user);
+} catch (err) {
+    return done(err);
+}
+
+  })
+);
 
 passport.use(new LocalStrategy({
   usernameField: 'email',
